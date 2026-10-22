@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Pods if available
+      - name: Install Pods Deep Search
         run: |
           PODFILE_PATH=$(find . -name "Podfile" | head -n 1)
           if [ -n "$PODFILE_PATH" ]; then
