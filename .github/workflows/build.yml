@@ -29,11 +29,10 @@ jobs:
           WORKSPACE=$(find . -name "*.xcworkspace" -not -path "*/Pods/*" | head -n 1)
           
           if [ -n "$WORKSPACE" ]; then
-            SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-            echo "Using Workspace: $WORKSPACE (Scheme: $SCHEME)"
+            echo "Using Workspace: $WORKSPACE with Scheme: Studytime"
             xcodebuild archive \
               -workspace "$WORKSPACE" \
-              -scheme "$SCHEME" \
+              -scheme "Studytime" \
               -sdk iphoneos \
               -archivePath build/App.xcarchive \
               CODE_SIGNING_ALLOWED=NO \
@@ -41,11 +40,10 @@ jobs:
               CODE_SIGN_IDENTITY=""
           else
             PROJECT=$(find . -name "*.xcodeproj" -not -path "*/Pods/*" | head -n 1)
-            SCHEME=$(basename "$PROJECT" .xcodeproj)
-            echo "Using Project: $PROJECT (Scheme: $SCHEME)"
+            echo "Using Project: $PROJECT with Scheme: Studytime"
             xcodebuild archive \
               -project "$PROJECT" \
-              -scheme "$SCHEME" \
+              -scheme "Studytime" \
               -sdk iphoneos \
               -archivePath build/App.xcarchive \
               CODE_SIGNING_ALLOWED=NO \
