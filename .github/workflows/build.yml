@@ -15,31 +15,23 @@ jobs:
 
       - name: Install Dependencies & Pods
         run: |
+          cd Studytime
           if [ -f "Podfile" ]; then
             pod install
           fi
 
       - name: Build Xcode Archive
         run: |
-          WORKSPACE=$(find . -maxdepth 2 -name "*.xcworkspace" | head -n 1)
-          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          
-          if [ -z "$WORKSPACE" ]; then
-            WORKSPACE=$(find . -maxdepth 2 -name "*.xcodeproj" | head -n 1)
-            SCHEME=$(basename "$WORKSPACE" .xcodeproj)
+          cd Studytime
+          if ls *.xcworkspace 1> /dev/null 2>&1; then
+            WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+            SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+            xcodebuild archive -workspace "$WORKSPACE" -scheme "$SCHEME" -sdk iphoneos -archivePath ../build/App.xcarchive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+          else
+            PROJECT=$(find . -maxdepth 1 -name "*.xcodeproj" | head -n 1)
+            SCHEME=$(basename "$PROJECT" .xcodeproj)
+            xcodebuild archive -project "$PROJECT" -scheme "$SCHEME" -sdk iphoneos -archivePath ../build/App.xcarchive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
           fi
-
-          echo "Using Workspace/Project: $WORKSPACE"
-          echo "Using Scheme: $SCHEME"
-
-          xcodebuild archive \
-            -workspace "$WORKSPACE" \
-            -scheme "$SCHEME" \
-            -sdk iphoneos \
-            -archivePath build/App.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
 
       - name: Create Unsigned IPA Package
         run: |
