@@ -13,30 +13,52 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Dependencies & Pods
+      - name: Install Pods if available
         run: |
-          cd Studytime
-          if [ -f "Podfile" ]; then
+          PODFILE_PATH=$(find . -name "Podfile" | head -n 1)
+          if [ -n "$PODFILE_PATH" ]; then
+            POD_DIR=$(dirname "$PODFILE_PATH")
+            echo "Found Podfile in $POD_DIR"
+            cd "$POD_DIR"
             pod install
+            cd -
           fi
 
       - name: Build Xcode Archive
         run: |
-          cd Studytime
-          if ls *.xcworkspace 1> /dev/null 2>&1; then
-            WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+          WORKSPACE=$(find . -name "*.xcworkspace" -not -path "*/Pods/*" | head -n 1)
+          
+          if [ -n "$WORKSPACE" ]; then
             SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-            xcodebuild archive -workspace "$WORKSPACE" -scheme "$SCHEME" -sdk iphoneos -archivePath ../build/App.xcarchive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+            echo "Using Workspace: $WORKSPACE (Scheme: $SCHEME)"
+            xcodebuild archive \
+              -workspace "$WORKSPACE" \
+              -scheme "$SCHEME" \
+              -sdk iphoneos \
+              -archivePath build/App.xcarchive \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY=""
           else
-            PROJECT=$(find . -maxdepth 1 -name "*.xcodeproj" | head -n 1)
+            PROJECT=$(find . -name "*.xcodeproj" -not -path "*/Pods/*" | head -n 1)
             SCHEME=$(basename "$PROJECT" .xcodeproj)
-            xcodebuild archive -project "$PROJECT" -scheme "$SCHEME" -sdk iphoneos -archivePath ../build/App.xcarchive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+            echo "Using Project: $PROJECT (Scheme: $SCHEME)"
+            xcodebuild archive \
+              -project "$PROJECT" \
+              -scheme "$SCHEME" \
+              -sdk iphoneos \
+              -archivePath build/App.xcarchive \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY=""
           fi
 
       - name: Create Unsigned IPA Package
         run: |
           mkdir -p Payload
-          cp -r build/App.xcarchive/Products/Applications/*.app Payload/
+          APP_PATH=$(find . -name "*.app" -not -path "*/Pods/*" | head -n 1)
+          echo "Found app at: $APP_PATH"
+          cp -r "$APP_PATH" Payload/
           zip -r StudyTime.ipa Payload
 
       - name: Upload IPA Artifact
